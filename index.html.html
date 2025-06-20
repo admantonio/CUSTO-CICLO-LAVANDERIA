@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Custos e Ponto de Equilíbrio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" xintegrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1f2937; 
+        }
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #4b5563; 
+            color: #f3f4f6; 
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+        }
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #d1d5db; 
+        }
+        .input-group input[type="number"], .input-group input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #6b7280; 
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+            background-color: #f9fafb; 
+            color: #1f2937; 
+        }
+        .input-group input[type="number"]:focus, .input-group input[type="text"]:focus {
+            outline: none;
+            border-color: #9ca3af; 
+            box-shadow: 0 0 0 3px rgba(156, 163, 175, 0.4);
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            margin: 0.25rem 0.5rem; 
+            color: white;
+        }
+        .btn-calculate {
+            background-color: #f97316;
+            color: white;
+        }
+        .btn-calculate:hover {
+            background-color: #ea580c;
+        }
+        .btn-add {
+            background-color: #2563eb;
+        }
+        .btn-add:hover {
+            background-color: #1d4ed8;
+        }
+        .btn-secondary {
+            background-color: #6b7280; 
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563; 
+        }
+         .btn-success {
+            background-color: #16a34a; 
+        }
+        .btn-success:hover {
+            background-color: #15803d; 
+        }
+        .report-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background-color: #374151;
+            color: #f3f4f6;
+            border-radius: 8px;
+            border: 1px solid #1f2937;
+        }
+        .report-section h3, .report-section h4 { 
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #f3f4f6;
+        }
+        .report-item, .expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #6b7280;
+        }
+        .report-item:last-child, .expense-item:last-child {
+            border-bottom: none;
+        }
+        .report-item span:first-child, .expense-item span:first-child {
+            color: #d1d5db;
+        }
+        .report-item span:last-child, .expense-item span:last-child {
+            font-weight: 500;
+            color: #f3f4f6;
+        }
+        .profit-display span:last-child, .total-profit-display span:last-child {
+            color: #4ade80;
+        }
+        .final-cost-display span:last-child {
+            color: #f43f5e; /* Rose 500 para custo final */
+        }
+        .section-title { 
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #9ca3af;
+            color: #f3f4f6;
+        }
+        .hidden {
+            display: none;
+        }
+        .btn-remove {
+            background-color: #be123c;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            margin-left: 1rem;
+        }
+        .btn-remove:hover {
+            background-color: #9f1239;
+        }
+        
+        #reportForPdf { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center mb-8 text-white">Calculadora de Custos e Ponto de Equilíbrio</h1>
+
+        <section class="mt-8">
+             <h2 class="section-title">1. Parâmetros Gerais e Fixos</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="input-group"><label for="energyPrice">Preço do kWh (R$):</label><input type="number" id="energyPrice" step="0.01" value="0.75"></div>
+                <div class="input-group" id="waterPriceGroup"><label for="waterPrice">Preço do m³ de Água (R$):</label><input type="number" id="waterPrice" step="0.01" value="5.00"></div>
+            </div>
+        </section>
+
+        <section class="mt-8">
+             <h2 class="section-title">2. Impostos e Taxas</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="input-group"><label for="taxPercentage">Imposto sobre Faturamento (%):</label><input type="number" id="taxPercentage" step="0.01" value="6.00"></div>
+                <div class="input-group"><label for="cardFeePercentage">Taxa de Cartão (%):</label><input type="number" id="cardFeePercentage" step="0.01" value="2.50"></div>
+            </div>
+        </section>
+
+        <section id="wash-cycle-section" class="mt-8">
+            <h2 class="section-title">3. Ciclo de Lavagem</h2>
+             <div class="grid md:grid-cols-2 gap-x-6">
+                 <div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-100">Projeção e Preço</h3>
+                     <div class="input-group"><label for="clientPriceWash">Valor Cobrado por Lavagem (R$):</label><input type="number" id="clientPriceWash" step="0.01" value="20.00"></div>
+                     <div class="input-group"><label for="expectedWashCycles">Ciclos de Lavagem Mensais:</label><input type="number" id="expectedWashCycles" value="100"></div>
+                     <h3 class="text-xl font-semibold mb-4 mt-6 text-gray-100">Custos Variáveis</h3>
+                    <div class="input-group"><label for="soapQty">Sabão (mL):</label><input type="number" id="soapQty" value="100"></div>
+                    <div class="input-group"><label for="soapPrice20L">Sabão Preço/20L (R$):</label><input type="number" id="soapPrice20L" step="0.01" value="50.00"></div>
+                    <div class="input-group"><label for="softenerQty">Amaciante (mL):</label><input type="number" id="softenerQty" value="50"></div>
+                    <div class="input-group"><label for="softenerPrice20L">Amaciante Preço/20L (R$):</label><input type="number" id="softenerPrice20L" step="0.01" value="60.00"></div>
+                    <div class="input-group"><label for="bleachQty">Alvejante (mL):</label><input type="number" id="bleachQty" value="0"></div>
+                    <div class="input-group"><label for="bleachPrice20L">Alvejante Preço/20L (R$):</label><input type="number" id="bleachPrice20L" step="0.01" value="40.00"></div>
+                 </div>
+                 <div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-100 opacity-0 md:opacity-100">.</h3> <!-- Espaçador para alinhar -->
+                     <h3 class="text-xl font-semibold mb-4 mt-6 text-gray-100 opacity-0 md:opacity-100">.</h3>
+                    <div class="input-group"><label for="waterLiters">Água por Lavagem (L):</label><input type="number" id="waterLiters" value="60"></div>
+                    <div class="input-group"><label for="washingMachineConsumption">Consumo de Energia (kWh/ciclo):</label><input type="number" id="washingMachineConsumption" step="0.01" value="0.5"></div>
+                    <div class="input-group"><label for="washTime">Tempo de Lavagem (min):</label><input type="number" id="washTime" value="90"></div>
+                 </div>
+             </div>
+        </section>
+
+        <section id="dry-cycle-section" class="mt-8">
+            <h2 class="section-title">4. Ciclo de Secagem</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                 <div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-100">Projeção e Preço</h3>
+                    <div class="input-group"><label for="clientPriceDry">Valor Cobrado por Secagem (R$):</label><input type="number" id="clientPriceDry" step="0.01" value="15.00"></div>
+                    <div class="input-group"><label for="expectedDryCycles">Ciclos de Secagem Mensais:</label><input type="number" id="expectedDryCycles" value="50"></div>
+                </div>
+                 <div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-100">Custos Variáveis</h3>
+                    <div class="input-group"><label for="dryerConsumption">Consumo de Energia (kWh/ciclo):</label><input type="number" id="dryerConsumption" step="0.01" value="1.5"></div>
+                    <div class="input-group"><label for="dryTime">Tempo de Secagem (min):</label><input type="number" id="dryTime" value="120"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="fixed-expenses-section" class="mt-8">
+            <h2 class="section-title">5. Despesas Fixas Mensais</h2>
+            <div class="grid md:grid-cols-3 gap-4 items-end">
+                <div class="input-group md:col-span-1"><label for="expenseDescription">Descrição:</label><input type="text" id="expenseDescription" placeholder="Ex: Aluguel"></div>
+                <div class="input-group md:col-span-1"><label for="expenseValue">Valor (R$):</label><input type="number" id="expenseValue" step="0.01" placeholder="Ex: 500.00"></div>
+                <div class="input-group md:col-span-1"><button id="addExpenseBtn" class="btn btn-add w-full">Adicionar</button></div>
+            </div>
+            <div id="fixed-expenses-list" class="mt-2 bg-gray-700 p-4 rounded-lg"></div>
+            <div class="text-right mt-4 text-lg font-bold"><span>Total Fixo Mensal: </span><span id="totalFixedExpensesValue">R$ 0,00</span></div>
+        </section>
+
+        <div class="mt-8 text-center flex justify-center flex-wrap">
+            <button id="calculateBtn" class="btn btn-calculate text-lg">Calcular</button>
+            <button id="clearBtn" class="btn btn-secondary text-lg">Limpar</button>
+            <button id="exportPdfBtn" class="btn btn-success text-lg hidden">Exportar PDF</button>
+        </div>
+
+        <div id="report" class="report-section hidden">
+            <!-- Nova seção para custos variáveis detalhados -->
+            <div id="variable-costs-report" class="mb-8 pb-4 border-b-4 border-gray-500">
+                <h3 class="text-xl font-bold mb-4">Custos Variáveis Detalhados</h3>
+                <div id="variableCostsDetailContainer"></div>
+            </div>
+
+            <!-- Relatório de Lavagem -->
+            <div id="wash-report" class="mb-8">
+                 <h3 class="text-xl font-bold mb-4">Análise do Ciclo de Lavagem</h3>
+                 <div class="report-item"><span class="font-semibold">Custo Variável por Lavagem:</span><span id="varCostWash" class="font-semibold">R$ 0,00</span></div>
+                 <div class="report-item"><span class="font-semibold">Lucro Bruto por Lavagem:</span><span id="grossProfitWash" class="font-semibold profit-display">R$ 0,00</span></div>
+                 <div class="report-item"><span>Impostos e Taxas por Lavagem:</span><span id="taxesAndFeesWash">R$ 0,00</span></div>
+                 <div class="report-item"><span>Custo Fixo Rateado por Ciclo:</span><span id="fixedCostPerCycleWash">R$ 0,00</span></div>
+                 <div class="report-item"><span class="font-bold final-cost-display">CUSTO FINAL POR LAVAGEM:</span><span id="finalCostWash" class="font-bold final-cost-display">R$ 0,00</span></div>
+                 <div class="report-item"><span class="font-bold profit-display">LUCRO LÍQUIDO POR LAVAGEM:</span><span id="netProfitWash" class="font-bold profit-display">R$ 0,00</span></div>
+            </div>
+
+            <!-- Relatório de Secagem -->
+            <div id="dry-report" class="mb-8 pt-4 border-t-2 border-gray-600">
+                 <h3 class="text-xl font-bold mb-4">Análise do Ciclo de Secagem</h3>
+                 <div class="report-item"><span class="font-semibold">Custo Variável por Secagem:</span><span id="varCostDry" class="font-semibold">R$ 0,00</span></div>
+                 <div class="report-item"><span class="font-semibold">Lucro Bruto por Secagem:</span><span id="grossProfitDry" class="font-semibold profit-display">R$ 0,00</span></div>
+                 <div class="report-item"><span>Impostos e Taxas por Secagem:</span><span id="taxesAndFeesDry">R$ 0,00</span></div>
+                 <div class="report-item"><span>Custo Fixo Rateado por Ciclo:</span><span id="fixedCostPerCycleDry">R$ 0,00</span></div>
+                 <div class="report-item"><span class="font-bold final-cost-display">CUSTO FINAL POR SECAGEM:</span><span id="finalCostDry" class="font-bold final-cost-display">R$ 0,00</span></div>
+                 <div class="report-item"><span class="font-bold profit-display">LUCRO LÍQUIDO POR SECAGEM:</span><span id="netProfitDry" class="font-bold profit-display">R$ 0,00</span></div>
+            </div>
+            
+             <!-- Projeção Mensal Consolidada -->
+             <div id="break-even-report" class="mt-8 pt-4 border-t-4 border-gray-500">
+                <h3 class="text-xl font-bold mb-4">Projeção Mensal Consolidada</h3>
+                 <div class="report-item total-profit-display">
+                    <span class="font-bold">FATURAMENTO TOTAL ESPERADO:</span>
+                    <span id="totalExpectedRevenue" class="font-bold">R$ 0,00</span>
+                </div>
+                <div class="report-item total-profit-display">
+                    <span class="font-bold">LUCRO TOTAL MENSAL ESTIMADO:</span>
+                    <span id="totalMonthlyProfit" class="font-bold">R$ 0,00</span>
+                </div>
+                <div class="report-item">
+                    <span>Ponto de Equilíbrio (Faturamento Mínimo):</span>
+                    <span id="breakEvenValue">R$ 0,00</span>
+                </div>
+                 <div class="report-item">
+                    <span>Ciclos de Lavagem para P.E.:</span>
+                    <span id="breakEvenWashCycles">0</span>
+                </div>
+                 <div class="report-item">
+                    <span>Ciclos de Secagem para P.E.:</span>
+                    <span id="breakEvenDryCycles">0</span>
+                </div>
+                <div class="report-item font-semibold">
+                    <span>Total de Ciclos para P.E. (soma):</span>
+                    <span id="breakEvenTotalCycles">0</span>
+                </div>
+                <div class="report-item">
+                    <span>Média de Ciclos/Dia para P.E. (mix):</span>
+                    <span id="dailyCyclesNeeded">0.0</span>
+                </div>
+            </div>
+        </div>
+        <div id="reportForPdf" class="hidden" aria-hidden="true"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let fixedExpenses = [];
+            const addExpenseBtn = document.getElementById('addExpenseBtn');
+            const expenseDescriptionEl = document.getElementById('expenseDescription');
+            const expenseValueEl = document.getElementById('expenseValue');
+            const fixedExpensesListEl = document.getElementById('fixed-expenses-list');
+            const totalFixedExpensesValueEl = document.getElementById('totalFixedExpensesValue');
+            
+            const calculateBtn = document.getElementById('calculateBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const exportPdfBtn = document.getElementById('exportPdfBtn');
+
+            function formatCurrency(value) {
+                return `R$ ${value.toFixed(2).replace('.', ',')}`;
+            }
+
+            function getNumericValue(element, defaultValue = 0) {
+                if (!element) return defaultValue;
+                const value = parseFloat(element.value);
+                return isNaN(value) || value < 0 ? defaultValue : value;
+            }
+
+            function renderFixedExpenses() {
+                fixedExpensesListEl.innerHTML = '';
+                let total = 0;
+                if (fixedExpenses.length === 0) {
+                    fixedExpensesListEl.innerHTML = '<p class="text-center text-gray-400">Nenhuma despesa fixa adicionada.</p>';
+                } else {
+                    fixedExpenses.forEach((expense, index) => {
+                        const item = document.createElement('div');
+                        item.className = 'expense-item';
+                        item.innerHTML = `
+                            <span>${expense.description}</span>
+                            <div>
+                                <span>${formatCurrency(expense.value)}</span>
+                                <button class="btn-remove" data-index="${index}">X</button>
+                            </div>
+                        `;
+                        fixedExpensesListEl.appendChild(item);
+                        total += expense.value;
+                    });
+                }
+                totalFixedExpensesValueEl.textContent = formatCurrency(total);
+                return total;
+            }
+
+            addExpenseBtn.addEventListener('click', () => {
+                const description = expenseDescriptionEl.value.trim();
+                const value = getNumericValue(expenseValueEl);
+                if (description && value > 0) {
+                    fixedExpenses.push({ description, value });
+                    expenseDescriptionEl.value = '';
+                    expenseValueEl.value = '';
+                    renderFixedExpenses();
+                } else {
+                    alert('Por favor, preencha a descrição e um valor válido para a despesa.');
+                }
+            });
+
+            fixedExpensesListEl.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-remove')) {
+                    const index = parseInt(e.target.dataset.index, 10);
+                    fixedExpenses.splice(index, 1);
+                    renderFixedExpenses();
+                }
+            });
+
+            calculateBtn.addEventListener('click', () => {
+                const variableCostsDetailContainerEl = document.getElementById('variableCostsDetailContainer');
+                variableCostsDetailContainerEl.innerHTML = '';
+
+                // --- Leitura dos Inputs ---
+                const clientPriceWash = getNumericValue(document.getElementById('clientPriceWash'));
+                const expectedWashCycles = getNumericValue(document.getElementById('expectedWashCycles'));
+                const clientPriceDry = getNumericValue(document.getElementById('clientPriceDry'));
+                const expectedDryCycles = getNumericValue(document.getElementById('expectedDryCycles'));
+                const energyPrice = getNumericValue(document.getElementById('energyPrice'));
+                const taxPercentage = getNumericValue(document.getElementById('taxPercentage'));
+                const cardFeePercentage = getNumericValue(document.getElementById('cardFeePercentage'));
+                
+                // --- Cálculo Custo Variável Lavagem ---
+                let variableCostWash = 0;
+                let reportHTML = `<h4 class="text-lg font-semibold mt-4 mb-2 text-gray-200">Custos de Lavagem</h4>`;
+                const waterPricePerM3 = getNumericValue(document.getElementById('waterPrice'));
+                const soapQtyMl = getNumericValue(document.getElementById('soapQty'));
+                const soapPrice20L = getNumericValue(document.getElementById('soapPrice20L'));
+                const soapCost = (soapQtyMl / 20000) * soapPrice20L;
+                variableCostWash += soapCost;
+                reportHTML += `<div class="report-item"><span>Custo do Sabão:</span> <span>${formatCurrency(soapCost)}</span></div>`;
+                const softenerQtyMl = getNumericValue(document.getElementById('softenerQty'));
+                const softenerPrice20L = getNumericValue(document.getElementById('softenerPrice20L'));
+                const softenerCost = (softenerQtyMl / 20000) * softenerPrice20L;
+                variableCostWash += softenerCost;
+                reportHTML += `<div class="report-item"><span>Custo do Amaciante:</span> <span>${formatCurrency(softenerCost)}</span></div>`;
+                const bleachQtyMl = getNumericValue(document.getElementById('bleachQty'));
+                if (bleachQtyMl > 0) {
+                    const bleachPrice20L = getNumericValue(document.getElementById('bleachPrice20L'));
+                    const bleachCost = (bleachQtyMl / 20000) * bleachPrice20L;
+                    variableCostWash += bleachCost;
+                    reportHTML += `<div class="report-item"><span>Custo do Alvejante:</span> <span>${formatCurrency(bleachCost)}</span></div>`;
+                }
+                const waterLiters = getNumericValue(document.getElementById('waterLiters'));
+                const waterCost = (waterLiters / 1000) * waterPricePerM3;
+                variableCostWash += waterCost;
+                reportHTML += `<div class="report-item"><span>Custo da Água:</span> <span>${formatCurrency(waterCost)}</span></div>`;
+                const washingMachineConsumptionKWh = getNumericValue(document.getElementById('washingMachineConsumption'));
+                const energyCostWash = washingMachineConsumptionKWh * energyPrice;
+                variableCostWash += energyCostWash;
+                reportHTML += `<div class="report-item"><span>Energia da Máquina de Lavar:</span> <span>${formatCurrency(energyCostWash)}</span></div>`;
+
+                // --- Cálculo Custo Variável Secagem ---
+                let variableCostDry = 0;
+                reportHTML += `<h4 class="text-lg font-semibold mt-4 mb-2 text-gray-200">Custos de Secagem</h4>`;
+                const dryerConsumptionKWh = getNumericValue(document.getElementById('dryerConsumption'));
+                const energyCostDry = dryerConsumptionKWh * energyPrice;
+                variableCostDry += energyCostDry;
+                reportHTML += `<div class="report-item"><span>Energia da Máquina de Secar:</span> <span>${formatCurrency(energyCostDry)}</span></div>`;
+                
+                variableCostsDetailContainerEl.innerHTML = reportHTML;
+
+                // --- Cálculo de Rateio, Impostos e Lucros por Ciclo ---
+                const totalFixed = fixedExpenses.reduce((acc, curr) => acc + curr.value, 0);
+                const totalExpectedCycles = (expectedWashCycles + expectedDryCycles) > 0 ? (expectedWashCycles + expectedDryCycles) : 1;
+                const fixedCostPerCycle = totalFixed / totalExpectedCycles;
+
+                const taxesAndFeesRate = (taxPercentage + cardFeePercentage) / 100;
+                const taxesAndFeesWash = clientPriceWash * taxesAndFeesRate;
+                const grossProfitWash = clientPriceWash - variableCostWash;
+                const finalCostWash = variableCostWash + fixedCostPerCycle + taxesAndFeesWash;
+                const netProfitWash = clientPriceWash - finalCostWash;
+
+                const taxesAndFeesDry = clientPriceDry * taxesAndFeesRate;
+                const grossProfitDry = clientPriceDry - variableCostDry;
+                const finalCostDry = variableCostDry + fixedCostPerCycle + taxesAndFeesDry;
+                const netProfitDry = clientPriceDry - finalCostDry;
+                
+                // --- Cálculo Projeções Mensais Consolidadas ---
+                const totalExpectedRevenue = (clientPriceWash * expectedWashCycles) + (clientPriceDry * expectedDryCycles);
+                const totalMonthlyNetProfit = (netProfitWash * expectedWashCycles) + (netProfitDry * expectedDryCycles);
+
+                // --- Ponto de Equilíbrio Consolidado ---
+                let breakEvenRevenue = Infinity;
+                let breakEvenTotalCyclesNum = Infinity;
+                const marginWash = clientPriceWash - variableCostWash - taxesAndFeesWash;
+                const marginDry = clientPriceDry - variableCostDry - taxesAndFeesDry;
+                const totalContributionMargin = (marginWash * expectedWashCycles) + (marginDry * expectedDryCycles);
+                
+                if (totalContributionMargin > 0) {
+                    const contributionMarginRatio = totalExpectedRevenue > 0 ? totalContributionMargin / totalExpectedRevenue : 0;
+                    if (contributionMarginRatio > 0) {
+                        breakEvenRevenue = totalFixed / contributionMarginRatio;
+                        
+                        const weightedAveragePrice = totalExpectedCycles > 0 ? totalExpectedRevenue / totalExpectedCycles : 0;
+                        if(weightedAveragePrice > 0){
+                           breakEvenTotalCyclesNum = breakEvenRevenue / weightedAveragePrice;
+                        }
+                    }
+                }
+                
+                // --- Atualização do Relatório na Tela ---
+                document.getElementById('varCostWash').textContent = formatCurrency(variableCostWash);
+                document.getElementById('grossProfitWash').textContent = formatCurrency(grossProfitWash);
+                document.getElementById('taxesAndFeesWash').textContent = formatCurrency(taxesAndFeesWash);
+                document.getElementById('fixedCostPerCycleWash').textContent = formatCurrency(fixedCostPerCycle);
+                document.getElementById('finalCostWash').textContent = formatCurrency(finalCostWash);
+                document.getElementById('netProfitWash').textContent = formatCurrency(netProfitWash);
+                document.getElementById('grossProfitWash').style.color = grossProfitWash < 0 ? '#ef4444' : '#4ade80';
+                document.getElementById('netProfitWash').style.color = netProfitWash < 0 ? '#ef4444' : '#4ade80';
+
+                document.getElementById('varCostDry').textContent = formatCurrency(variableCostDry);
+                document.getElementById('grossProfitDry').textContent = formatCurrency(grossProfitDry);
+                document.getElementById('taxesAndFeesDry').textContent = formatCurrency(taxesAndFeesDry);
+                document.getElementById('fixedCostPerCycleDry').textContent = formatCurrency(fixedCostPerCycle);
+                document.getElementById('finalCostDry').textContent = formatCurrency(finalCostDry);
+                document.getElementById('netProfitDry').textContent = formatCurrency(netProfitDry);
+                document.getElementById('grossProfitDry').style.color = grossProfitDry < 0 ? '#ef4444' : '#4ade80';
+                document.getElementById('netProfitDry').style.color = netProfitDry < 0 ? '#ef4444' : '#4ade80';
+                
+                document.getElementById('totalExpectedRevenue').textContent = formatCurrency(totalExpectedRevenue);
+                const totalMonthlyProfitEl = document.getElementById('totalMonthlyProfit');
+                totalMonthlyProfitEl.textContent = formatCurrency(totalMonthlyNetProfit);
+                totalMonthlyProfitEl.style.color = totalMonthlyNetProfit < 0 ? '#ef4444' : '#4ade80';
+                
+                document.getElementById('breakEvenValue').textContent = (breakEvenRevenue === Infinity) ? 'Inatingível' : formatCurrency(breakEvenRevenue);
+                
+                if (breakEvenTotalCyclesNum !== Infinity && breakEvenTotalCyclesNum > 0) {
+                    const washProportion = expectedWashCycles / totalExpectedCycles;
+                    const dryProportion = expectedDryCycles / totalExpectedCycles;
+                    const beWashCycles = breakEvenTotalCyclesNum * washProportion;
+                    const beDryCycles = breakEvenTotalCyclesNum * dryProportion;
+
+                    document.getElementById('breakEvenWashCycles').textContent = Math.ceil(beWashCycles).toLocaleString('pt-BR');
+                    document.getElementById('breakEvenDryCycles').textContent = Math.ceil(beDryCycles).toLocaleString('pt-BR');
+                    document.getElementById('breakEvenTotalCycles').textContent = Math.ceil(breakEvenTotalCyclesNum).toLocaleString('pt-BR');
+                    document.getElementById('dailyCyclesNeeded').textContent = (breakEvenTotalCyclesNum / 30).toFixed(1).replace('.', ',');
+                } else {
+                    document.getElementById('breakEvenWashCycles').textContent = 'Inatingível';
+                    document.getElementById('breakEvenDryCycles').textContent = 'Inatingível';
+                    document.getElementById('breakEvenTotalCycles').textContent = 'Inatingível';
+                    document.getElementById('dailyCyclesNeeded').textContent = 'Inatingível';
+                }
+
+                document.getElementById('report').classList.remove('hidden');
+                document.getElementById('exportPdfBtn').classList.remove('hidden');
+            });
+            
+            const defaultValues = {
+                clientPriceWash: "20.00", expectedWashCycles: "100", 
+                clientPriceDry: "15.00", expectedDryCycles: "50",
+                energyPrice: "0.75", waterPrice: "5.00", taxPercentage: "6.00", cardFeePercentage: "2.50",
+                soapQty: "100", soapPrice20L: "50.00", softenerQty: "50", softenerPrice20L: "60.00", bleachQty: "0", bleachPrice20L: "40.00",
+                waterLiters: "60", washingMachineConsumption: "0.5", washTime: "90",
+                dryerConsumption: "1.5", dryTime: "120"
+            };
+
+            clearBtn.addEventListener('click', () => {
+                document.querySelectorAll('input[type="number"], input[type="text"]').forEach(input => {
+                    const id = input.id;
+                    if(defaultValues[id]) {
+                        input.value = defaultValues[id];
+                    } else {
+                        input.value = '';
+                    }
+                });
+                fixedExpenses = [];
+                renderFixedExpenses();
+                document.getElementById('report').classList.add('hidden');
+                document.getElementById('exportPdfBtn').classList.add('hidden');
+            });
+
+            clearBtn.click();
+        });
+    </script>
+</body>
+</html>
